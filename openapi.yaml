@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: PineappleGinge REST API
+  version: 1.0.0
+  description: API for users and cars (auto-generated OpenAPI spec)
+servers:
+  - url: http://localhost:3000
+paths:
+  /ping:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/v1/users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: ID of created user
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/users/{id}:
+    get:
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    delete:
+      summary: Delete user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/v1/cars:
+    get:
+      summary: List cars
+      responses:
+        '200':
+          description: A list of cars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Car'
+    post:
+      summary: Create a car
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarCreate'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: ID of created car
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/cars/{id}:
+    get:
+      summary: Get car by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The car
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update car by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    delete:
+      summary: Delete car by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phonenumber:
+          type: string
+        email:
+          type: string
+          format: email
+        dob:
+          type: string
+          format: date
+    UserCreate:
+      type: object
+      required: [name, phonenumber, email, dob]
+      properties:
+        name:
+          type: string
+        phonenumber:
+          type: string
+        email:
+          type: string
+          format: email
+        dob:
+          type: string
+          format: date
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phonenumber:
+          type: string
+        email:
+          type: string
+          format: email
+        dob:
+          type: string
+          format: date
+
+    Car:
+      type: object
+      properties:
+        id:
+          type: string
+        make:
+          type: string
+          enum: [Opel, Ford, BMW, Audi, Toyota, Honda, Chevrolet, Nissan, Volkswagen, Mercedes, Hyundai, Kia, Subaru, Mazda, Lexus]
+        model:
+          type: string
+        color:
+          type: string
+          enum: [black, white, silver, gray, red, blue, green, yellow, orange, brown, beige, gold, purple, pink, teal]
+        yearOfCar:
+          type: string
+          format: date
+    CarCreate:
+      type: object
+      required: [make, model, color, yearOfCar]
+      properties:
+        make:
+          $ref: '#/components/schemas/Car/properties/make'
+        model:
+          type: string
+        color:
+          $ref: '#/components/schemas/Car/properties/color'
+        yearOfCar:
+          type: string
+          format: date
+    CarUpdate:
+      type: object
+      properties:
+        make:
+          type: string
+          enum: [Opel, Ford, BMW, Audi, Toyota, Honda, Chevrolet, Nissan, Volkswagen, Mercedes, Hyundai, Kia, Subaru, Mazda, Lexus]
+        model:
+          type: string
+        color:
+          type: string
+          enum: [black, white, silver, gray, red, blue, green, yellow, orange, brown, beige, gold, purple, pink, teal]
+        yearOfCar:
+          type: string
+          format: date
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        text/plain:
+          schema:
+            type: string
+    BadRequest:
+      description: Bad request - validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+
+tags: []

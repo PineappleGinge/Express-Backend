@@ -1,0 +1,91 @@
+@endpoint = http://localhost:3000/api/v1/cars
+
+
+### 1) POST (valid) - create a car
+# @name postCarSuccess
+POST {{endpoint}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "make": "Kia",
+    "model": "Rio",
+    "color": "black",
+    "yearOfCar": "2005-03-15"
+}
+###
+
+@carId = {{postCarSuccess.response.body._id}}
+
+
+### 2) POST (invalid)
+# @name postCarInvalid
+POST {{endpoint}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "make": "",
+    "model": "Civic",
+    "color": "Invisible",
+    "yearOfCar": "not-a-date"
+}
+
+### 3) GET collection
+# @name getCars
+GET http://localhost:3000/api/v1/cars HTTP/1.1
+
+### 4) GET individual (success)
+# @name getCarSuccess
+
+GET {{endpoint}}/691464bdc78af721812036ce HTTP/1.1
+
+### 5) GET individual (not found)
+# @name getCarNotFound
+GET {{endpoint}}/000000000000000000000000 HTTP/1.1
+
+### 6) PUT (success)
+# @name putCarSuccess
+PUT {{endpoint}}/{{carId}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "make": "Kia",
+    "model": "Rio",
+    "color": "Blue",
+    "yearOfCar": "2006-06-20"
+}
+
+### 7) PUT (not found)
+# @name putCarNotFound
+PUT {{endpoint}}/000000000000000000000001 HTTP/1.1
+Content-Type: application/json
+
+{
+    "make": "Ford",
+    "model": "Focus",
+    "color": "Green",
+    "yearOfCar": "2010-01-01"
+}
+
+### 8) PUT (invalid)
+# @name putCarInvalid
+PUT {{endpoint}}/{{carId}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "make": "",
+    "model": "",
+    "color": "NotAColor",
+    "yearOfCar": "abcd"
+}
+
+### 9) DELETE (success)
+# @name deleteCarSuccess
+DELETE {{endpoint}}/690c8d8b0827f85ebe00e438 HTTP/1.1
+
+### 10) DELETE (not found)
+# @name deleteCarFail
+DELETE {{endpoint}}/690c8d8b0827f85ebe00e438 HTTP/1.1
+
+###
+DELETE {{endpoint}} HTTP/1.1
+
