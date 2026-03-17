@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { collections } from '../database'; 
 import { Car } from '../models/car' ;
 import { ObjectId } from 'mongodb';
-import{z} from 'zod';
-import { createCarSchema } from '../models/car';
+import { createCarSchema, isModelValidForMake, Make } from '../models/car';
 
 export const getCars = async (req: Request, res: Response) => {
   try {
@@ -90,8 +89,25 @@ export const updateCar = async (req: Request, res: Response) => {
     }
     try {
         const query = { _id: new ObjectId(id) };
+        const existingCar = await collections.cars?.findOne(query);
+        if (!existingCar) {
+            return res.status(404).send(`Unable to find matching document with id: ${id}`);
+        }
 
         const updateData: any = { ...req.body };
+        const makeForValidation = (updateData.make ?? existingCar.make) as Make;
+        const modelForValidation = (updateData.model ?? existingCar.model) as string;
+
+        if (!isModelValidForMake(makeForValidation, modelForValidation)) {
+            return res.status(400).json({
+                errors: [
+                    {
+                        path: ['model'],
+                        message: `Model "${modelForValidation}" is not valid for make "${makeForValidation}"`,
+                    },
+                ],
+            });
+        }
 
         if (updateData.yearOfCar) {
             updateData.yearOfCar = new Date(updateData.yearOfCar);
@@ -100,10 +116,6 @@ export const updateCar = async (req: Request, res: Response) => {
 
         if (!result) {
             return res.status(500).send('Failed to update car.');
-        }
-
-        if ((result as any).matchedCount === 0) {
-            return res.status(404).send(`Unable to find matching document with id: ${id}`);
         }
         return res.status(200).json({ message: `Successfully updated car with id ${id}` });
     } catch (error) {

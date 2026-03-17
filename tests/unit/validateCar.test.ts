@@ -43,6 +43,18 @@ describe('Car validation (createCarSchema)', () => {
         expect(result.success).toBe(false);
     });
 
+    it('rejects payload when model does not belong to make', () => {
+        const payload = {
+            make: 'Opel',
+            model: 'Mustang',
+            color: 'red',
+            yearOfCar: '2020-01-01',
+        } as any;
+
+        const result = createCarSchema.safeParse(payload);
+        expect(result.success).toBe(false);
+    });
+
     it('rejects payload when date cannot be parsed', () => {
         const payload = {
             make: 'Opel',
@@ -134,4 +146,3 @@ describe('Car validation (createCarSchema)', () => {
         expect(result.success).toBe(true);
     });
 });
-

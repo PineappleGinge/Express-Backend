@@ -66,6 +66,20 @@ describe('Car API', () => {
       .expect(400);
   });
 
+  test('should return 400 for invalid make and model combination', async () => {
+    const badCar = {
+      make: 'Opel',
+      model: 'Mustang',
+      color: 'red',
+      yearOfCar: '2021-05-20',
+    };
+
+    await request(app)
+      .post('/api/v1/cars')
+      .send(badCar)
+      .expect(400);
+  });
+
   test('should return 404 for non-existing car id', async () => {
     const missingId = '000000000000000000000000';
 
