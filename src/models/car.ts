@@ -64,9 +64,10 @@ export interface Car {
   model: string; 
   color: Color; 
   yearOfCar?: Date;
+  imageUrl?: string | null;
 }
 
-export const createCarSchema = z.object({
+export const carSchemaBase = z.object({
   make: z.enum([
     Make.Opel,
     Make.Ford,
@@ -103,7 +104,22 @@ export const createCarSchema = z.object({
     Color.Teal,
   ]),
   yearOfCar: z.coerce.date(),
-}).superRefine((data, ctx) => {
+  imageUrl: z.preprocess(
+    (value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed === "") {
+          return null;
+        }
+        return trimmed;
+      }
+      return value;
+    },
+    z.string().url("imageUrl must be a valid URL").nullable().optional()
+  ),
+});
+
+export const createCarSchema = carSchemaBase.superRefine((data, ctx) => {
   if (!isModelValidForMake(data.make, data.model)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -112,3 +128,5 @@ export const createCarSchema = z.object({
     });
   }
 });
+
+export const updateCarSchema = carSchemaBase.partial();

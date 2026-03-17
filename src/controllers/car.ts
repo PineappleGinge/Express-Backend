@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { collections } from '../database'; 
 import { Car } from '../models/car' ;
 import { ObjectId } from 'mongodb';
-import { createCarSchema, isModelValidForMake, Make } from '../models/car';
+import { createCarSchema, isModelValidForMake, Make, updateCarSchema } from '../models/car';
 
 export const getCars = async (req: Request, res: Response) => {
   try {
@@ -44,16 +44,20 @@ export const getCarById = async (req: Request, res: Response) => {
 
 export const createCar = async (req: Request, res: Response) => { 
    
-    console.log(req.body); 
-    const {make, model, color, yearOfCar} = req.body;
-  
-    const newCar : Car = {make : make, model: model, color: color, yearOfCar : new Date(yearOfCar)}
-
     const validation = createCarSchema.safeParse(req.body);
 
     if (!validation.success) { 
         return res.status(400).json({ errors: validation.error.issues }); 
     }
+    const { make, model, color, yearOfCar, imageUrl } = validation.data;
+
+    const newCar: Car = {
+        make,
+        model,
+        color,
+        yearOfCar: new Date(yearOfCar),
+        imageUrl,
+    };
     try { 
         const result = await collections.cars?.insertOne(newCar) 
 
@@ -82,8 +86,7 @@ export const updateCar = async (req: Request, res: Response) => {
         return res.status(400).send("Missing car id");
     }
 
-    const partialSchema = createCarSchema.partial();
-    const validation = partialSchema.safeParse(req.body);
+    const validation = updateCarSchema.safeParse(req.body);
     if (!validation.success) {
         return res.status(400).json({ errors: validation.error.issues });
     }
@@ -94,7 +97,7 @@ export const updateCar = async (req: Request, res: Response) => {
             return res.status(404).send(`Unable to find matching document with id: ${id}`);
         }
 
-        const updateData: any = { ...req.body };
+        const updateData: any = { ...validation.data };
         const makeForValidation = (updateData.make ?? existingCar.make) as Make;
         const modelForValidation = (updateData.model ?? existingCar.model) as string;
 

@@ -19,7 +19,6 @@ const router: Router = express.Router();
 
 router.get('/', getCars); 
 router.get('/:id', getCarById); 
-router.post('/', createCar); 
 router.put('/:id', updateCar); 
 router.delete('/:id', deleteCar); 
 
