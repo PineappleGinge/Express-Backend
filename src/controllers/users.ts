@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { collections } from '../database'; 
 import { ObjectId } from 'mongodb';
 import argon2 from 'argon2';
+import { Role } from '../models/user';
+
+const DEFAULT_ADMIN_EMAIL = 'joe99@gmail.com';
 
 export const getUsers = async (req: Request, res: Response) => { 
     try {
@@ -45,8 +48,9 @@ export const getUserById = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => { 
 
     console.log(req.body);  
-    const {name, phonenumber, email, dob, password} = req.body;
+    const {name, phonenumber, email, dob, password, role} = req.body;
     const normalizedEmail = email?.toLowerCase();
+    const enforcedRole = normalizedEmail === DEFAULT_ADMIN_EMAIL ? Role.admin : role;
 
     if (!password) {
         return res.status(400).json({ error: 'Password is required' });
@@ -68,6 +72,7 @@ export const createUser = async (req: Request, res: Response) => {
             dateJoined: new Date(),
             lastUpdated: new Date(),
             hashedPassword,
+            role: enforcedRole,
         };
 
         const result = await collections.users?.insertOne(newUser); 

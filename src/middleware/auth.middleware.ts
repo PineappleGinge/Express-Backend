@@ -15,35 +15,25 @@ export const validJWTProvided = async (
   res: Response,
   next: NextFunction
 ) => {
-  
       const authHeader = req.headers?.authorization;
+      const tokenFromBearer = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+      const tokenFromAltHeader = req.headers['x-access-token'];
+      const tokenFromAlt = typeof tokenFromAltHeader === 'string' ? tokenFromAltHeader : undefined;
+      const token = tokenFromBearer ?? tokenFromAlt;
 
-      if (!authHeader || !authHeader?.startsWith('Bearer')) {
-        console.log('no header ' + authHeader)
-            res.status(401).send();
-            return;
+      if (!token) {
+        return res.status(401).json({ message: 'Unauthorized: provide Authorization: Bearer <token>' });
       }
 
-     
-      const token: string | undefined = authHeader.split(' ')[1];
-
-      if (!token) { 
-            res.status(401).send();
-            return;
-      }
       const secret = process.env.JWT_SECRET || "not very secret";
-    
-      try{
-        console.log(token);
+
+      try {
         const payload = jwtVerify(token, secret);
         res.locals.payload = payload;
-        next();
-            
-
-        } catch (err) {
-           res.status(403).send();
-           return;
-        }
+        return next();
+      } catch (_err) {
+        return res.status(401).json({ message: 'Unauthorized: token is invalid or expired' });
+      }
     };
 
 export const isAdmin = async (

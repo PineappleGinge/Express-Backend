@@ -1,5 +1,4 @@
 import express, {Router} from 'express'; 
-import { authenticateKey } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { createCarSchema } from '../models/car';
 

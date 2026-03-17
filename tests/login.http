@@ -10,7 +10,8 @@ content-type: application/json
   "email": "{{email}}",
   "phonenumber": "0871234567",
   "dob": "2000-01-01",
-  "password": "{{password}}"
+  "password": "{{password}}",
+  "role": "admin"
 }
 ###
 
