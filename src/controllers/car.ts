@@ -3,6 +3,7 @@ import { collections } from '../database';
 import { Car } from '../models/car' ;
 import { ObjectId } from 'mongodb';
 import { createCarSchema, isModelValidForMake, Make, updateCarSchema } from '../models/car';
+import axios from 'axios';
 
 export const getCars = async (req: Request, res: Response) => {
   try {
@@ -161,6 +162,44 @@ export const deleteCar = async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         return res.status(500).send(`Unable to delete car: ${error instanceof Error ? error.message : String(error)}`);
+    }
+};
+
+export const getCarValue = async (req: Request, res: Response) => {
+    const { make, model, year } = req.query;
+
+    if (!make || !model || !year) {
+        return res.status(400).json({ message: 'Missing required query params: make, model, year' });
+    }
+
+    const rapidApiKey = process.env.RAPIDAPI_KEY;
+    const rapidApiHost = process.env.RAPIDAPI_HOST;
+
+    if (!rapidApiKey || !rapidApiHost) {
+        return res.status(500).json({ message: 'RapidAPI credentials are not configured' });
+    }
+
+    try {
+        const response = await axios.get(
+            'https://vehicle-pricing-api.p.rapidapi.com/2775/get%2Bvehicle%2Bvalue',
+            {
+                params: {
+                    maker: String(make),
+                    model: String(model),
+                    year: String(year),
+                },
+                headers: {
+                    'x-rapidapi-key': rapidApiKey,
+                    'x-rapidapi-host': rapidApiHost,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        return res.status(200).json(response.data);
+    } catch (error) {
+        console.error('Vehicle pricing API error:', error);
+        return res.status(500).json({ message: 'Failed to fetch vehicle pricing data' });
     }
 };
     

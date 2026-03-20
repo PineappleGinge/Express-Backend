@@ -16,8 +16,9 @@
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "argon2": "^0.44.0",
+    "axios": "^1.13.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",

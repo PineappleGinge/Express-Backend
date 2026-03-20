@@ -10,6 +10,7 @@ import {
     createCar, 
     updateCar, 
     deleteCar, 
+    getCarValue,
 
 } from '../controllers/car'; 
 
@@ -18,6 +19,7 @@ import {
 const router: Router = express.Router(); 
 
 router.get('/', getCars); 
+router.get('/value', getCarValue);
 router.get('/:id', getCarById); 
 router.put('/:id', validJWTProvided, isAdmin, updateCar); 
 router.delete('/:id', validJWTProvided, isAdmin, deleteCar); 

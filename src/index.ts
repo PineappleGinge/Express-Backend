@@ -44,6 +44,7 @@ app.use(express.json());
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/cars', carRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/cars', carRoutes);
 
 // Serve the OpenAPI YAML file and Swagger UI at /docs
 app.get('/openapi.yaml', (_req: Request, res: Response) => {
