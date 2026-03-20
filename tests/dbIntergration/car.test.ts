@@ -1,9 +1,10 @@
 import request from 'supertest';
 import { app } from '../../src/index';
-import { initDb, closeDb } from '../../src/database';
+import { sign as jwtSign } from 'jsonwebtoken';
 
 describe('Car API', () => {
   let carId: string;
+  let adminToken: string;
   
   const newCar = {
     "make": "Opel",
@@ -12,9 +13,18 @@ describe('Car API', () => {
     "yearOfCar": "2021-05-20",
   };
 
+  beforeAll(() => {
+    adminToken = jwtSign(
+      { email: 'integration-admin@test.local', role: 'admin' },
+      process.env.JWT_SECRET || 'not very secret',
+      { expiresIn: '1h' }
+    );
+  });
+
   test('should create a car and return Location header', async () => {
     const res = await request(app)
       .post('/api/v1/cars')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send(newCar)
       .expect(201);
 
@@ -46,6 +56,7 @@ describe('Car API', () => {
   test('should update a car partially', async () => {
     const res = await request(app)
       .put(`/api/v1/cars/${carId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ color: 'blue' })
       .expect(200);
 
@@ -62,6 +73,7 @@ describe('Car API', () => {
 
     await request(app)
       .post('/api/v1/cars')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send(badCar)
       .expect(400);
   });
@@ -76,6 +88,7 @@ describe('Car API', () => {
 
     await request(app)
       .post('/api/v1/cars')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send(badCar)
       .expect(400);
   });
@@ -91,6 +104,7 @@ describe('Car API', () => {
   test('should delete a car', async () => {
     await request(app)
       .delete(`/api/v1/cars/${carId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
 
     
@@ -98,12 +112,4 @@ describe('Car API', () => {
       .get(`/api/v1/cars/${carId}`)
       .expect(404);
   });
-});
-
-beforeAll(async () => {
-  await initDb();
-});
-
-afterAll(async () => {
-  await closeDb();
 });

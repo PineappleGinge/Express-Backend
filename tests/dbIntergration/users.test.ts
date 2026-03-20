@@ -1,13 +1,21 @@
 import request from 'supertest';
 import { app } from '../../src/index';
+import { sign as jwtSign } from 'jsonwebtoken';
 
 jest.setTimeout(10000);
 
 describe('User API', () => {
   let userId: string;
+  let adminToken: string;
   let newUser: any;
   
   beforeAll(() => {
+    adminToken = jwtSign(
+      { email: 'integration-admin@test.local', role: 'admin' },
+      process.env.JWT_SECRET || 'not very secret',
+      { expiresIn: '1h' }
+    );
+
     newUser = {
       name: "Una",
       phonenumber: "0871234567",
@@ -20,6 +28,7 @@ describe('User API', () => {
 
     const res = await request(app)
       .post('/api/v1/users')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send(newUser)
       .expect(201);
 
@@ -42,6 +51,7 @@ describe('User API', () => {
   test('should handle update request (returns json message)', async () => {
     const res = await request(app)
       .put(`/api/v1/users/${userId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Updated Name' })
       .expect(200);
 
@@ -61,6 +71,7 @@ describe('User API', () => {
   test('should update user and persist change', async () => {
     await request(app)
       .put(`/api/v1/users/${userId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Updated Name' })
       .expect(200);
 
@@ -71,6 +82,7 @@ describe('User API', () => {
   test('should delete the user and return 404 afterwards', async () => {
     await request(app)
       .delete(`/api/v1/users/${userId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
 
     await request(app)
@@ -80,7 +92,11 @@ describe('User API', () => {
 
   test('should return 400 for invalid create payload', async () => {
     const bad = { name: 'NoEmail', phonenumber: '0870000000', dob: '2000-01-01' };
-    await request(app).post('/api/v1/users').send(bad).expect(400);
+    await request(app)
+      .post('/api/v1/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(bad)
+      .expect(400);
   });
 
   test('should return 404 for malformed id', async () => {

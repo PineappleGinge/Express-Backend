@@ -1,4 +1,4 @@
-import { createCarSchema } from '../../src/models/car';
+import { createCarSchema, updateCarSchema } from '../../src/models/car';
 
 describe('Car validation (createCarSchema)', () => {
     it('accepts a valid car payload', () => {
@@ -80,9 +80,8 @@ describe('Car validation (createCarSchema)', () => {
     });
 
     it('allows partial payloads when using partial schema (update)', () => {
-        const partialSchema = (createCarSchema as any).partial();
         const payload = { color: 'blue' };
-        const result = partialSchema.safeParse(payload);
+        const result = updateCarSchema.safeParse(payload);
         expect(result.success).toBe(true);
     });
 

@@ -1,3 +1,21 @@
+@endpoint = http://localhost:3000/api/v1/users
+@authEndpoint = http://localhost:3000/api/v1/auth
+@adminEmail = joe99@gmail.com
+@adminPassword = password
+
+### Login as admin and capture token
+# @name loginAdmin
+POST {{authEndpoint}} HTTP/1.1
+content-type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+###
+@accessToken = {{loginAdmin.response.body.$.accessToken}}
+
 ###
 GET http://localhost:3000/api/v1/users/id123 HTTP/1.1
 content-type: application/json
@@ -10,3 +28,32 @@ GET http://localhost:3000/api/v1/users/id123 HTTP/1.1
 content-type: application/json
 x-api-key: blahblah
 
+###
+# @name createUserAsAdmin
+POST {{endpoint}} HTTP/1.1
+content-type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "REST Test User",
+  "email": "resttestuser@example.com",
+  "phonenumber": "0870000000",
+  "dob": "2001-01-01",
+  "password": "password",
+  "role": "editor"
+}
+
+###
+# @name updateUserAsAdmin
+PUT {{endpoint}}/PUT_USER_ID_HERE HTTP/1.1
+content-type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "REST Updated User"
+}
+
+###
+# @name deleteUserAsAdmin
+DELETE {{endpoint}}/DELETE_USER_ID_HERE HTTP/1.1
+Authorization: Bearer {{accessToken}}

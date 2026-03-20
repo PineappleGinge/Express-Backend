@@ -42,12 +42,11 @@ export const isAdmin = async (
   next: NextFunction
 ) => {
   const role = res.locals?.payload?.role;
-  console.log('role is ' + role);
 
   if (role && role === 'admin') {
     next();
     return;
   }
 
-  res.status(403).json({ opps: 'not an admin' });
+  res.status(403).json({ message: 'Not authorised' });
 };

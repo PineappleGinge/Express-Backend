@@ -11,13 +11,15 @@ const createAccessToken = (user: User | null): string => {
   const secret = process.env.JWT_SECRET || "not very secret";
 
   const expiresTime = '2h';
+  const normalizedTokenEmail = typeof user?.email === 'string' ? user.email.trim().toLowerCase() : '';
+  const tokenRole = normalizedTokenEmail === DEFAULT_ADMIN_EMAIL ? Role.admin : user?.role;
 
   console.log(expiresTime);
   const payload: Object =
   {
     email: user?.email,
     name: user?.name,
-    role: user?.role
+    role: tokenRole
   }
   const token = jwtSig(payload, secret, { expiresIn: expiresTime });
 

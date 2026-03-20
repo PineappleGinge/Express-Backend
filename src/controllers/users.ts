@@ -50,7 +50,13 @@ export const createUser = async (req: Request, res: Response) => {
     console.log(req.body);  
     const {name, phonenumber, email, dob, password, role} = req.body;
     const normalizedEmail = email?.toLowerCase();
-    const enforcedRole = normalizedEmail === DEFAULT_ADMIN_EMAIL ? Role.admin : role;
+    const requesterRole = res.locals?.payload?.role;
+    const isRequesterAdmin = requesterRole === Role.admin;
+    const requestedRole = role;
+    const enforcedRole =
+        normalizedEmail === DEFAULT_ADMIN_EMAIL
+            ? Role.admin
+            : (!isRequesterAdmin && requestedRole === Role.admin ? Role.empty : requestedRole);
 
     if (!password) {
         return res.status(400).json({ error: 'Password is required' });

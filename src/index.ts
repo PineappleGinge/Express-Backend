@@ -11,7 +11,11 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import path from 'path';
 
-initDb();
+if (process.env.NODE_ENV !== 'test') {
+    initDb().catch((error) => {
+        console.error('Failed to initialize database connection', error);
+    });
+}
 
 const PORT = process.env.PORT || 3000;
 
@@ -47,4 +51,3 @@ app.get('/openapi.yaml', (_req: Request, res: Response) => {
 });
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.yaml' }));
-
