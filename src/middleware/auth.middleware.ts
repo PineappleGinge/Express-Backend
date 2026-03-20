@@ -48,5 +48,5 @@ export const isAdmin = async (
     return;
   }
 
-  res.status(403).json({ message: 'Not authorised' });
+  return res.status(403).json({ message: 'Not authorised' });
 };

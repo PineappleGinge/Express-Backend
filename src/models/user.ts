@@ -3,6 +3,7 @@ import Joi from "joi";
 
 export enum Role {
   admin = 'admin',
+  user = 'user',
   editor = 'editor',
   empty = '',
 }
@@ -28,5 +29,4 @@ export const createUserSchema = Joi.object<User>({
   email: Joi.string().email().required(),
   dob: Joi.date().optional(),
   password: Joi.string().max(64).optional(),
-  role: Joi.string().valid(Role.admin, Role.editor, Role.empty).optional(),
 });

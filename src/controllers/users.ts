@@ -10,7 +10,7 @@ export const getUsers = async (req: Request, res: Response) => {
     try {
         const users = await collections.users
             ?.find({})
-            .project({ hashedPassword: 0 })
+            .project({ hashedPassword: 0, password: 0 })
             .toArray();
         res.status(200).json(users);
     } catch (error) { 
@@ -31,7 +31,7 @@ export const getUserById = async (req: Request, res: Response) => {
     try { 
         const query = { _id: new ObjectId(id) }; 
         const user = await collections.users?.findOne(query, {
-            projection: { hashedPassword: 0 },
+            projection: { hashedPassword: 0, password: 0 },
         }); 
 
         if (user) { 
@@ -46,17 +46,12 @@ export const getUserById = async (req: Request, res: Response) => {
 }; 
 
 export const createUser = async (req: Request, res: Response) => { 
-
-    console.log(req.body);  
-    const {name, phonenumber, email, dob, password, role} = req.body;
-    const normalizedEmail = email?.toLowerCase();
-    const requesterRole = res.locals?.payload?.role;
-    const isRequesterAdmin = requesterRole === Role.admin;
-    const requestedRole = role;
-    const enforcedRole =
+    const {name, phonenumber, email, dob, password} = req.body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const assignedRole =
         normalizedEmail === DEFAULT_ADMIN_EMAIL
             ? Role.admin
-            : (!isRequesterAdmin && requestedRole === Role.admin ? Role.empty : requestedRole);
+            : Role.user;
 
     if (!password) {
         return res.status(400).json({ error: 'Password is required' });
@@ -78,7 +73,7 @@ export const createUser = async (req: Request, res: Response) => {
             dateJoined: new Date(),
             lastUpdated: new Date(),
             hashedPassword,
-            role: enforcedRole,
+            role: assignedRole,
         };
 
         const result = await collections.users?.insertOne(newUser); 
@@ -110,9 +105,31 @@ export const updateUser = async (req: Request, res: Response) => {
     }
     try {
         const query = { _id: new ObjectId(id) };
+        const allowedUpdates: Array<'name' | 'phonenumber' | 'dob'> = ['name', 'phonenumber', 'dob'];
+        const updateData: Partial<Record<'name' | 'phonenumber' | 'dob', string | Date>> = {};
+        for (const key of allowedUpdates) {
+            if (req.body[key] !== undefined) {
+                if ((key === 'name' || key === 'phonenumber') && typeof req.body[key] !== 'string') {
+                    return res.status(400).json({ message: `${key} must be a string` });
+                }
+                updateData[key] = req.body[key];
+            }
+        }
+
+        if (updateData.dob) {
+            const dobDate = new Date(updateData.dob);
+            if (Number.isNaN(dobDate.getTime())) {
+                return res.status(400).json({ message: 'dob must be a valid date' });
+            }
+            updateData.dob = dobDate;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ message: "No valid fields provided for update" });
+        }
+
         const updatedFields = {
-            ...req.body,
-            dob: req.body.dob ? new Date(req.body.dob) : undefined,
+            ...updateData,
             lastUpdated: new Date(),
         };
 
