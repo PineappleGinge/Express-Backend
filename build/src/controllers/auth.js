@@ -35,16 +35,20 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleLogin = void 0;
 const database_1 = require("../database");
+const user_1 = require("../models/user");
 const argon2 = __importStar(require("argon2"));
 const jsonwebtoken_1 = require("jsonwebtoken");
+const DEFAULT_ADMIN_EMAIL = 'joe99@gmail.com';
 const createAccessToken = (user) => {
     const secret = process.env.JWT_SECRET || "not very secret";
-    const expiresTime = '2 mins';
+    const expiresTime = '2h';
+    const normalizedTokenEmail = typeof user?.email === 'string' ? user.email.trim().toLowerCase() : '';
+    const tokenRole = normalizedTokenEmail === DEFAULT_ADMIN_EMAIL ? user_1.Role.admin : user?.role;
     console.log(expiresTime);
     const payload = {
         email: user?.email,
         name: user?.name,
-        role: user?.role
+        role: tokenRole
     };
     const token = (0, jsonwebtoken_1.sign)(payload, secret, { expiresIn: expiresTime });
     return token;
@@ -52,32 +56,75 @@ const createAccessToken = (user) => {
 const handleLogin = async (req, res) => {
     const { email, password } = req.body;
     const dummyHash = await argon2.hash("time wasting");
-    if (!email || !password) {
+    const normalizedEmailInput = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const normalizedPasswordInput = typeof password === 'string' ? password.trim() : '';
+    if (!normalizedEmailInput || !normalizedPasswordInput) {
         res
             .status(400)
             .json({ message: 'Email and password are required' });
         return;
     }
-    const user = await database_1.collections.users?.findOne({
-        email: email.toLowerCase(),
+    const normalizedEmail = normalizedEmailInput;
+    let user = await database_1.collections.users?.findOne({
+        email: normalizedEmail,
     });
-    if (user && user.hashedPassword) {
-        const isPasswordValid = await argon2.verify(user.hashedPassword, password);
-        // If password is valid send a token
+    if (!user && normalizedEmail === DEFAULT_ADMIN_EMAIL) {
+        const hashedPassword = await argon2.hash(normalizedPasswordInput);
+        const bootstrapAdmin = {
+            email: normalizedEmail,
+            name: 'Joe Admin',
+            phonenumber: '0000000000',
+            role: user_1.Role.admin,
+            hashedPassword,
+            dateJoined: new Date(),
+            lastUpdated: new Date(),
+        };
+        await database_1.collections.users?.insertOne(bootstrapAdmin);
+        user = await database_1.collections.users?.findOne({ email: normalizedEmail });
+    }
+    if (user) {
+        let isPasswordValid = false;
+        let shouldMigrateLegacyPassword = false;
+        if (user.hashedPassword) {
+            isPasswordValid = await argon2.verify(user.hashedPassword, normalizedPasswordInput);
+        }
+        else if (typeof user.password === 'string') {
+            // Backward compatibility for legacy records that still store plain passwords.
+            isPasswordValid = user.password === normalizedPasswordInput;
+            shouldMigrateLegacyPassword = isPasswordValid;
+        }
         if (isPasswordValid) {
-            res.status(201).json({ accessToken: createAccessToken(user) });
+            const userForToken = { ...user };
+            const updateSet = { lastUpdated: new Date() };
+            const updateUnset = {};
+            if (normalizedEmail === DEFAULT_ADMIN_EMAIL && userForToken.role !== user_1.Role.admin) {
+                userForToken.role = user_1.Role.admin;
+                updateSet.role = user_1.Role.admin;
+            }
+            if (shouldMigrateLegacyPassword) {
+                const newHashedPassword = await argon2.hash(normalizedPasswordInput);
+                userForToken.hashedPassword = newHashedPassword;
+                updateSet.hashedPassword = newHashedPassword;
+                updateUnset.password = '';
+            }
+            if (Object.keys(updateSet).length > 0 || Object.keys(updateUnset).length > 0) {
+                await database_1.collections.users?.updateOne({ email: normalizedEmail }, {
+                    ...(Object.keys(updateSet).length > 0 ? { $set: updateSet } : {}),
+                    ...(Object.keys(updateUnset).length > 0 ? { $unset: updateUnset } : {}),
+                });
+            }
+            res.status(201).json({ accessToken: createAccessToken(userForToken) });
+            return;
         }
-        else {
-            res.status(401).json({
-                message: 'Invalid email or password!'
-            });
-        }
+        res.status(401).json({
+            message: 'Invalid email or password!'
+        });
         return;
     }
     // if here the user was not found or there was no hashedpassword.
     // the code below is so that the time taken will be roughly the same if the
     // password is incorrect or if the user does not exist.
-    await argon2.verify(dummyHash, password);
+    await argon2.verify(dummyHash, normalizedPasswordInput);
     res.status(401).json({
         message: 'Invalid email or password!'
     });

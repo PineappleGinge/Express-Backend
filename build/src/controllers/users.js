@@ -7,6 +7,8 @@ exports.deleteUser = exports.updateUser = exports.createUser = exports.getUserBy
 const database_1 = require("../database");
 const mongodb_1 = require("mongodb");
 const argon2_1 = __importDefault(require("argon2"));
+const user_1 = require("../models/user");
+const DEFAULT_ADMIN_EMAIL = 'joe99@gmail.com';
 const getUsers = async (req, res) => {
     try {
         const users = await database_1.collections.users
@@ -44,8 +46,14 @@ const getUserById = async (req, res) => {
 exports.getUserById = getUserById;
 const createUser = async (req, res) => {
     console.log(req.body);
-    const { name, phonenumber, email, dob, password } = req.body;
+    const { name, phonenumber, email, dob, password, role } = req.body;
     const normalizedEmail = email?.toLowerCase();
+    const requesterRole = res.locals?.payload?.role;
+    const isRequesterAdmin = requesterRole === user_1.Role.admin;
+    const requestedRole = role;
+    const enforcedRole = normalizedEmail === DEFAULT_ADMIN_EMAIL
+        ? user_1.Role.admin
+        : (!isRequesterAdmin && requestedRole === user_1.Role.admin ? user_1.Role.empty : requestedRole);
     if (!password) {
         return res.status(400).json({ error: 'Password is required' });
     }
@@ -63,6 +71,7 @@ const createUser = async (req, res) => {
             dateJoined: new Date(),
             lastUpdated: new Date(),
             hashedPassword,
+            role: enforcedRole,
         };
         const result = await database_1.collections.users?.insertOne(newUser);
         if (result) {

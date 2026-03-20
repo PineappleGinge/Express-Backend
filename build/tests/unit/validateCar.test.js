@@ -68,9 +68,8 @@ describe('Car validation (createCarSchema)', () => {
         expect(result.success).toBe(false);
     });
     it('allows partial payloads when using partial schema (update)', () => {
-        const partialSchema = car_1.createCarSchema.partial();
         const payload = { color: 'blue' };
-        const result = partialSchema.safeParse(payload);
+        const result = car_1.updateCarSchema.safeParse(payload);
         expect(result.success).toBe(true);
     });
     it('accepts numeric timestamp for yearOfCar (coerced)', () => {

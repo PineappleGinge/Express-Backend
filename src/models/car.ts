@@ -63,7 +63,7 @@ export interface Car {
   make: Make; 
   model: string; 
   color: Color; 
-  yearOfCar?: Date;
+  yearOfCar?: number;
   imageUrl?: string | null;
 }
 
@@ -103,7 +103,7 @@ export const carSchemaBase = z.object({
     Color.Pink,
     Color.Teal,
   ]),
-  yearOfCar: z.coerce.date(),
+  yearOfCar: z.coerce.number().int(),
   imageUrl: z.preprocess(
     (value) => {
       if (typeof value === "string") {

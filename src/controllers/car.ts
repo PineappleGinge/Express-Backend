@@ -55,7 +55,7 @@ export const createCar = async (req: Request, res: Response) => {
         make,
         model,
         color,
-        yearOfCar: new Date(yearOfCar),
+        yearOfCar,
         imageUrl,
     };
     try { 
@@ -112,8 +112,19 @@ export const updateCar = async (req: Request, res: Response) => {
             });
         }
 
-        if (updateData.yearOfCar) {
-            updateData.yearOfCar = new Date(updateData.yearOfCar);
+        if (updateData.yearOfCar !== undefined) {
+            updateData.yearOfCar = Number(updateData.yearOfCar);
+            const currentYear = new Date().getFullYear();
+            if (!Number.isInteger(updateData.yearOfCar) || updateData.yearOfCar < 1886 || updateData.yearOfCar > currentYear + 1) {
+                return res.status(400).json({
+                    errors: [
+                        {
+                            path: ['yearOfCar'],
+                            message: `yearOfCar must be an integer between 1886 and ${currentYear + 1}`,
+                        },
+                    ],
+                });
+            }
         }
         const result = await collections.cars?.updateOne(query, { $set: updateData });
 

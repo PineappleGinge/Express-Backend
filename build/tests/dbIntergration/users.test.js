@@ -5,11 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const supertest_1 = __importDefault(require("supertest"));
 const index_1 = require("../../src/index");
+const jsonwebtoken_1 = require("jsonwebtoken");
 jest.setTimeout(10000);
 describe('User API', () => {
     let userId;
+    let adminToken;
     let newUser;
     beforeAll(() => {
+        adminToken = (0, jsonwebtoken_1.sign)({ email: 'integration-admin@test.local', role: 'admin' }, process.env.JWT_SECRET || 'not very secret', { expiresIn: '1h' });
         newUser = {
             name: "Una",
             phonenumber: "0871234567",
@@ -21,6 +24,7 @@ describe('User API', () => {
     test('should create a user and return Location header', async () => {
         const res = await (0, supertest_1.default)(index_1.app)
             .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
             .send(newUser)
             .expect(201);
         const location = res.header['location'];
@@ -38,6 +42,7 @@ describe('User API', () => {
     test('should handle update request (returns json message)', async () => {
         const res = await (0, supertest_1.default)(index_1.app)
             .put(`/api/v1/users/${userId}`)
+            .set('Authorization', `Bearer ${adminToken}`)
             .send({ name: 'Updated Name' })
             .expect(200);
         expect(res.body).toHaveProperty('message');
@@ -54,6 +59,7 @@ describe('User API', () => {
     test('should update user and persist change', async () => {
         await (0, supertest_1.default)(index_1.app)
             .put(`/api/v1/users/${userId}`)
+            .set('Authorization', `Bearer ${adminToken}`)
             .send({ name: 'Updated Name' })
             .expect(200);
         const getRes = await (0, supertest_1.default)(index_1.app).get(`/api/v1/users/${userId}`).expect(200);
@@ -62,6 +68,7 @@ describe('User API', () => {
     test('should delete the user and return 404 afterwards', async () => {
         await (0, supertest_1.default)(index_1.app)
             .delete(`/api/v1/users/${userId}`)
+            .set('Authorization', `Bearer ${adminToken}`)
             .expect(200);
         await (0, supertest_1.default)(index_1.app)
             .get(`/api/v1/users/${userId}`)
@@ -69,7 +76,11 @@ describe('User API', () => {
     });
     test('should return 400 for invalid create payload', async () => {
         const bad = { name: 'NoEmail', phonenumber: '0870000000', dob: '2000-01-01' };
-        await (0, supertest_1.default)(index_1.app).post('/api/v1/users').send(bad).expect(400);
+        await (0, supertest_1.default)(index_1.app)
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send(bad)
+            .expect(400);
     });
     test('should return 404 for malformed id', async () => {
         await (0, supertest_1.default)(index_1.app)

@@ -12,36 +12,30 @@ const authenticateKey = async (req, res, next) => {
 exports.authenticateKey = authenticateKey;
 const validJWTProvided = async (req, res, next) => {
     const authHeader = req.headers?.authorization;
-    if (!authHeader || !authHeader?.startsWith('Bearer')) {
-        console.log('no header ' + authHeader);
-        res.status(401).send();
-        return;
-    }
-    const token = authHeader.split(' ')[1];
+    const tokenFromBearer = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const tokenFromAltHeader = req.headers['x-access-token'];
+    const tokenFromAlt = typeof tokenFromAltHeader === 'string' ? tokenFromAltHeader : undefined;
+    const token = tokenFromBearer ?? tokenFromAlt;
     if (!token) {
-        res.status(401).send();
-        return;
+        return res.status(401).json({ message: 'Unauthorized: provide Authorization: Bearer <token>' });
     }
     const secret = process.env.JWT_SECRET || "not very secret";
     try {
-        console.log(token);
         const payload = (0, jsonwebtoken_1.verify)(token, secret);
         res.locals.payload = payload;
-        next();
+        return next();
     }
-    catch (err) {
-        res.status(403).send();
-        return;
+    catch (_err) {
+        return res.status(401).json({ message: 'Unauthorized: token is invalid or expired' });
     }
 };
 exports.validJWTProvided = validJWTProvided;
 const isAdmin = async (req, res, next) => {
     const role = res.locals?.payload?.role;
-    console.log('role is ' + role);
     if (role && role === 'admin') {
         next();
         return;
     }
-    res.status(403).json({ opps: 'not an admin' });
+    res.status(403).json({ message: 'Not authorised' });
 };
 exports.isAdmin = isAdmin;
