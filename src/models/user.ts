@@ -28,5 +28,5 @@ export const createUserSchema = Joi.object<User>({
   phonenumber: Joi.string().min(10).required(),
   email: Joi.string().email().required(),
   dob: Joi.date().optional(),
-  password: Joi.string().max(64).optional(),
+  password: Joi.string().min(1).max(64).required(),
 });

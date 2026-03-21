@@ -47,14 +47,15 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => { 
     const {name, phonenumber, email, dob, password} = req.body;
+    const normalizedPassword = typeof password === 'string' ? password.trim() : '';
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     const assignedRole =
         normalizedEmail === DEFAULT_ADMIN_EMAIL
             ? Role.admin
             : Role.user;
 
-    if (!password) {
-        return res.status(400).json({ error: 'Password is required' });
+    if (!normalizedPassword) {
+        return res.status(400).json({ error: 'New user password is required' });
     }
 
     try { 
@@ -63,7 +64,7 @@ export const createUser = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'existing email' });
         }
 
-        const hashedPassword = await argon2.hash(password);
+        const hashedPassword = await argon2.hash(normalizedPassword);
 
         const newUser = {
             name,

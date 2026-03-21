@@ -221,7 +221,7 @@ components:
           format: date
     UserCreate:
       type: object
-      required: [name, phonenumber, email, dob]
+      required: [name, phonenumber, email, password]
       properties:
         name:
           type: string
@@ -233,6 +233,8 @@ components:
         dob:
           type: string
           format: date
+        password:
+          type: string
     UserUpdate:
       type: object
       properties:

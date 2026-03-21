@@ -56,17 +56,8 @@ describe('createUser controller POST validations', () => {
     const next: NextFunction = jest.fn();
 
     await runValidate(req, res, next);
-    expect(next).toHaveBeenCalledTimes(1);
-
-    collections.users = {
-      findOne: jest.fn().mockResolvedValue(null),
-      insertOne: jest.fn().mockResolvedValue({ insertedId: '123' }),
-    } as any;
-
-    await createUser(req, res);
-
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Password is required' });
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('returns 400 for badly formed email', async () => {
